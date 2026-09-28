@@ -22,6 +22,52 @@ npm install     # install TypeScript and Node types
 npx tsc         # compile src/ into dist/
 ```
 
+## Project configuration
+
+### package.json
+
+| Field | Why it matters |
+|-------|----------------|
+| `"type": "module"` | Node treats `.js` files as ES modules, so `import` / `export` work. This is why our imports end in `.js` (e.g. `./utils.js`): TypeScript compiles `.ts` to `.js`, and Node needs the real file name. |
+| `devDependencies` | Tools needed only while developing, not at runtime (installed with `npm install -D`). |
+| `typescript` | The compiler (`tsc`). |
+| `@types/node` | Type definitions for Node.js. |
+
+Why `@types/node`? TypeScript does not know Node's built-in features on its own. `cli.ts` uses `node:readline` and `process.stdin` / `process.stdout`; without `@types/node`, `tsc` reports errors such as `Cannot find name 'node:readline'` and `Cannot find name 'process'` (TS2591). `@types/node` only adds types, so nothing changes at runtime.
+
+Setting up a project like this from scratch:
+
+```bash
+npm init -y
+npm install -D typescript @types/node
+npx tsc --init
+```
+
+Then add `"type": "module"` to `package.json`.
+
+### tsconfig.json
+
+Tells `tsc` how to check and compile our code.
+
+| Option | What it does |
+|--------|--------------|
+| `rootDir: "./src"` | Our TypeScript source lives in `src/`. |
+| `outDir: "./dist"` | Compiled JavaScript is written to `dist/` (same folder structure as `src/`). |
+| `module: "es6"` | Output uses `import` / `export`, which matches `"type": "module"`. |
+| `target: "esnext"` | Output uses modern JavaScript; no downgrading to older syntax. |
+| `types: ["node"]` | Load the `@types/node` definitions (see above). |
+| `sourceMap`, `declaration`, `declarationMap` | Extra output files: `.js.map` for debugging, `.d.ts` type declarations, and maps for them. |
+| `strict: true` | Turns on all strict type checks. This is the most important option; it catches most bugs. |
+| `noUncheckedIndexedAccess` | `array[0]` has type `T \| undefined`, because the index might not exist. |
+| `exactOptionalPropertyTypes` | An optional property (`title?: string`) may be left out, but cannot be set to `undefined` explicitly. |
+| `isolatedModules`, `verbatimModuleSyntax` | Each file must be compilable on its own; controls how `import type` is handled. |
+| `moduleDetection: "force"` | Every file is treated as a module, so top-level names do not clash between files. |
+| `noUncheckedSideEffectImports` | Errors when `import "file"` points to a file that does not exist. |
+| `skipLibCheck` | Skips type checking of `.d.ts` files in `node_modules`, for faster builds. |
+| `jsx` | Only needed for React; not used in this course. |
+
+The commented-out options in `tsconfig.json` (`noUnusedLocals`, `noImplicitReturns`, ...) are extra style checks you can switch on by removing the `//`.
+
 ## Run the Task Manager
 
 Main entry point (runs the scripted demo):
